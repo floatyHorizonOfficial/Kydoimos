@@ -1,5 +1,5 @@
 # Kydoimos
-A programming language which is tedious to use
+A programming language which is tedious to use, not intended for practical things.
 
 ## How to Use
 ### Requirements
