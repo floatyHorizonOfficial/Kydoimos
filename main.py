@@ -21,7 +21,10 @@ flags = 0b00000  # Less, More, Zero, Negative, --Carry [DEPRECATED]--
 a,x,y = 0,0,0
 
 code = []
-for i in open("program", "rb").read(): code.append(hex(i)[2:].upper().rjust(2, "0"))
+if len(sys.argv) > 1:
+  for i in open(sys.argv[0], "rb").read(): code.append(hex(i)[2:].upper().rjust(2, "0"))
+else:
+  for i in open("program", "rb").read(): code.append(hex(i)[2:].upper().rjust(2, "0"))
 
 codeStr = ""
 for i in code: codeStr += i
