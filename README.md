@@ -3,8 +3,8 @@ A programming language which is tedious to use, not intended for practical thing
 
 ## How to Use
 ### Requirements
-Hex Editor
-Python 3
+Hex Editor<br>
+Python 3<br>
 Lots of sanity (or not)
 
 ### Running Programs
