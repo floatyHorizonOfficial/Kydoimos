@@ -200,13 +200,13 @@ while True:
       reader += 2
     
     case "7A":
-      a = code[reader+1] >> 1
+      a = a >> code[reader+1]
       reader += 1
     case "7B":
       a = Utils.hexAddressToDec(code[reader+1] + code[reader+2]) >> 1
       reader += 2
     case "7C":
-      a = code[reader+1] << 1
+      a = a << code[reader+1]
       reader += 1
     case "7D":
       a = Utils.hexAddressToDec(code[reader+1] + code[reader+2]) << 1
