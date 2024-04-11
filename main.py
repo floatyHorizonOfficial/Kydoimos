@@ -1,5 +1,6 @@
 import Utils
 import sys
+import os
 
 if __name__ != "__main__":
   print("Do not use as import!")
@@ -11,18 +12,22 @@ SPECS:
 > 256 Slots of Stack
 REGISTERS:
 A: Main Reg. for work
-X,Y: Short Memory
+X,Y: Registers
 """
 ram = [0,]*65536 # 8192 Bytes (8.2kB) of RAM
 stack = [] # Cap at 256 items
-version = "01"
-flags = 0b00000  # Less, More, Zero, Negative, --Carry [DEPRECATED]--
+supportedVersions = ["02", "01"]
+libraries = []
+flags = 0b0000  # Less, More, Zero, Negative
 
 a,x,y = 0,0,0
 
 code = []
 if len(sys.argv) > 1:
-  for i in open(sys.argv[0], "rb").read(): code.append(hex(i)[2:].upper().rjust(2, "0"))
+  if sys.argv[1] == "--version" or sys.argv[1] == "-v":
+    print(f"Reader in Version {supportedVersions[0]}\nSupported versions are: {supportedVersions}")
+    quit()
+  for i in open(sys.argv[1], "rb").read(): code.append(hex(i)[2:].upper().rjust(2, "0"))
 else:
   for i in open("program", "rb").read(): code.append(hex(i)[2:].upper().rjust(2, "0"))
 
@@ -87,13 +92,13 @@ while True:
     
     case "44": a -= 1
     case "45": x -= 1
-    case "46": a += x + (flags & 0b01)
-    case "47": a += y + (flags & 0b01)
+    case "46": a += x
+    case "47": a += y
     case "48":
-      a += int(code[reader+1], 16) + (flags & 0b01)
+      a += int(code[reader+1], 16)
       reader += 1
     case "49":
-      a += ram[Utils.hexAddressToDec(code[reader+1] + code[reader+2])] + (flags & 0b1)
+      a += ram[Utils.hexAddressToDec(code[reader+1] + code[reader+2])]
       reader += 2
     
     case "4A":
@@ -140,11 +145,11 @@ while True:
       reader += 1
     
     case "63":
-      if 0b100 == flags & 0b100:
+      if 0b10 == flags & 0b10:
         reader = Utils.hexAddressToDec(code[reader+1:reader+5])-1
       else: reader += 4
     case "64":
-      if 0b10000 == flags & 0b10000:
+      if 0b1000 == flags & 0b1000:
         reader = Utils.hexAddressToDec(code[reader+1:reader+5])-1
       else: reader += 4
     
@@ -179,11 +184,11 @@ while True:
       reader += 1
     
     case "73":
-      if 0b0 == flags & 0b100:
+      if 0b0 == flags & 0b10:
         reader = Utils.hexAddressToDec(code[reader+1:reader+5])-1
       else: reader += 4
     case "74":
-      if 0b1000 == flags & 0b1000:
+      if 0b100 == flags & 0b100:
         reader = Utils.hexAddressToDec(code[reader+1:reader+5])-1
       else: reader += 4
     
@@ -211,6 +216,37 @@ while True:
     case "7D":
       a = Utils.hexAddressToDec(code[reader+1] + code[reader+2]) << 1
       reader += 2
+    
+    case "90":
+      fileLength = int(code[reader+1], 16)
+      libFile = ""
+      for i in range(0, fileLength):
+        libFile += chr(int(code[reader+2+i], 16))
+      libFile += ".py"
+      
+      if not os.path.exists(libFile):
+        reader += 2+fileLength
+        continue
+      
+      libraries.append([libFile, code[reader+fileLength+2]])
+      reader += 2+fileLength
+
+    case "91":
+      if len(libraries) == 0:
+        print(f"No Libraries loaded! Because this can cause issues the program will stop at 0x{hex(reader)[2:].rjust(6, "0")}")
+        quit()
+      
+      args = []
+      argsStr = ""
+      argCount = int(code[reader+2], 16)
+      if argCount != 0:
+        args = code[reader+3:reader+3+argCount]
+        for i in args: argsStr += i
+
+      for lib in libraries:
+        os.system(f"python {lib[0]} {lib[1]} {argsStr}")
+
+      reader += 2+argCount
 
     case "C8":
       bufLength = int(code[reader+1], 16)
@@ -218,8 +254,8 @@ while True:
       buffer = ""
       for i in range(0, bufLength):
         buffer += chr(ram[address+i])
-      reader += 3
       print(buffer)
+      reader += 3
     case "C9":
       address = Utils.hexAddressToDec(code[reader+1] + code[reader+2])
       reader += 2
@@ -250,19 +286,17 @@ while True:
     case "E1": x,y,a = 0,0,0
     case "E2": flags = 0b0
 
-    case "F0":
-      if 0b1 == flags & 0b1: flags -= 1
     case "F1":
-      if 0b10 == flags & 0b10: flags -= 2
+      if 0b1 == flags & 0b1: flags -= 2
     case "F2":
-      if 0b10000 == flags & 0b10000: flags -= 16
+      if 0b1000 == flags & 0b1000: flags -= 16
     case "F3":
-      if 0b1000 == flags & 0b1000: flags -= 8
+      if 0b100 == flags & 0b100: flags -= 8
     case "F4":
-      if 0b100 == flags & 0b100: flags -= 4
+      if 0b10 == flags & 0b10: flags -= 4
     
     case "FF":
-      Utils.checkValidHeader(code[reader+1:6], version)
+      Utils.checkValidHeader(code[reader+1:6], supportedVersions)
       reader += 4
     case _:
       print(f"Illegal Operation Code {code[reader]} used at 0x{hex(reader)[2:].rjust(6, "0").upper()}! Continuing....")
