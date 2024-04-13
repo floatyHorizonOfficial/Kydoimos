@@ -225,11 +225,11 @@ while True:
       libFile += ".py"
       
       if not os.path.exists(libFile):
-        reader += 2+fileLength
+        reader += 1+fileLength
         continue
       
-      libraries.append([libFile, code[reader+fileLength+2]])
-      reader += 2+fileLength
+      libraries.append(libFile)
+      reader += 1+fileLength
 
     case "91":
       if len(libraries) == 0:
@@ -244,7 +244,7 @@ while True:
         for i in args: argsStr += i
 
       for lib in libraries:
-        os.system(f"python {lib[0]} {lib[1]} {argsStr}")
+        os.system(f"python {lib} {code[reader+1]} {argsStr}")
 
       reader += 2+argCount
 
