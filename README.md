@@ -1,6 +1,7 @@
 # Kydoimos
 A programming language which is tedious to use, not intended for practical things.<br>
 Latest Kydoimos Header: ```46 48 56 02``` (FHV Version 2)
+Move to C or C++ will happen soon...
 
 ## How to Use
 ### Requirements
